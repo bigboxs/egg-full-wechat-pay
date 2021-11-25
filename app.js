@@ -18,19 +18,19 @@ const PAY_CLASS_NAMES = [
 
 module.exports = app => {
   app.beforeStart(async () => {
-    const { wechatPay } = app.config || {};
+    const { fullWechatPay } = app.config || {};
     const payClassNamesSet = new Set(PAY_CLASS_NAMES);
-    if (wechatPay.pfx && typeof wechatPay.pfx === 'string') {
-      wechatPay.pfx = fs.readFileSync(path.resolve(__dirname, wechatPay.pfx));
+    if (fullWechatPay.pfx && typeof fullWechatPay.pfx === 'string') {
+      fullWechatPay.pfx = fs.readFileSync(path.resolve(__dirname, fullWechatPay.pfx));
     }
-    if (wechatPay.appId && wechatPay.key && wechatPay.mchId) {
-      Object.keys(wechatPay).filter(key => ![ 'appId', 'key', 'mchId', 'pfx' ].includes(key)).map(key => {
+    if (fullWechatPay.appId && fullWechatPay.key && fullWechatPay.mchId) {
+      Object.keys(fullWechatPay).filter(key => ![ 'appId', 'key', 'mchId', 'pfx' ].includes(key)).map(key => {
         const className = upperFirst.upperCaseFirst(key);
-        if (payClassNamesSet.has(className) && wechatPay[key] && typeof wechatPay[key] === 'object' && wechatPay[key].enable) {
+        if (payClassNamesSet.has(className) && fullWechatPay[key] && typeof fullWechatPay[key] === 'object' && fullWechatPay[key].enable) {
           try {
-            app[key] = new paySDK[className](_.pick(wechatPay, [ 'appId', 'key', 'mchId', 'pfx' ]));
+            app[key] = new paySDK[className](_.pick(fullWechatPay, [ 'appId', 'key', 'mchId', 'pfx' ]));
           } catch (error) {
-            console.log(`wechatPay init ${className} fail. params is ${JSON.stringify(wechatPay)}`);
+            console.log(`fullWechatPay init ${className} fail. params is ${JSON.stringify(fullWechatPay)}`);
           }
         }
       });
