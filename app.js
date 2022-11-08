@@ -18,22 +18,31 @@ const PAY_CLASS_NAMES = [
 
 module.exports = app => {
   app.beforeStart(async () => {
-    const { fullWechatPay } = app.config || {};
-    const payClassNamesSet = new Set(PAY_CLASS_NAMES);
-    if (fullWechatPay.pfx && typeof fullWechatPay.pfx === 'string') {
-      fullWechatPay.pfx = fs.readFileSync(path.resolve(__dirname, fullWechatPay.pfx));
-    }
-    if (fullWechatPay.appId && fullWechatPay.key && fullWechatPay.mchId) {
-      Object.keys(fullWechatPay).filter(key => ![ 'appId', 'key', 'mchId', 'pfx' ].includes(key)).map(key => {
-        const className = upperFirst.upperCaseFirst(key);
-        if (payClassNamesSet.has(className) && fullWechatPay[key] && typeof fullWechatPay[key] === 'object' && fullWechatPay[key].enable) {
-          try {
-            app[key] = new paySDK[className](_.pick(fullWechatPay, [ 'appId', 'key', 'mchId', 'pfx' ]));
-          } catch (error) {
-            console.log(`fullWechatPay init ${className} fail. params is ${JSON.stringify(fullWechatPay)}`);
+    let { fullWechatPay } = app.config;
+    if (fullWechatPay) {
+      const { appId, key, mchId, methods, pfx } = fullWechatPay;
+      if (!appId || !key || !mchId || !methods || !pfx) {
+        console.log(`WechatPay params incomplete`);
+        return;
+      }
+      if (!_.isArray(methods)) {
+        console.log(`WechatPay params methods must be array `);
+        return;
+      }
+      const payClassNamesSet = new Set(PAY_CLASS_NAMES);
+      fullWechatPay.pfx = fs.readFileSync(path.resolve(__dirname, pfx));
+      try {
+        methods.map((key) => {
+          const className = upperFirst.upperCaseFirst(key);
+          if (payClassNamesSet.has(className)) {
+            app[key] = new paySDK[className](_.pick(fullWechatPay, ['appId', 'key', 'mchId', 'pfx']));
           }
-        }
-      });
+        });
+      } catch (error) {
+        console.log(`WechatPay init ${className} fail. params is ${JSON.stringify(fullWechatPay)}`);
+      }
+    } else {
+      console.log(`WechatPay does not exist`);
     }
   });
 };
